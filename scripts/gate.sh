@@ -73,17 +73,55 @@ done
 # --------------------------------------------------------------- secret scan
 # The house scanner is deliberately NOT vendored into this repo: its pattern
 # list names internal hostnames, which is exactly what must not be published.
+# Allowed disclosures live in scripts/secret-scan.allowlist, each one carrying
+# the reason it is allowed. The scanner's own patterns are never edited.
 step "secret scan"
 SCAN="$HOME/meta/scripts/secret-scan.sh"
+ALLOW="scripts/secret-scan.allowlist"
+
+scan_target() { # label, args...
+  local label="$1"; shift
+  local out hits allowed pats rc
+  out=$("$SCAN" "$@" 2>&1); rc=$?
+  if [ "$rc" -eq 0 ]; then ok "$label clean"; return; fi
+  # Hit lines look like "<n>:+<text>"; everything else is scanner chatter.
+  hits=$(printf '%s\n' "$out" | grep -E '^[0-9]+:' || true)
+  if [ -z "$hits" ]; then
+    bad "$label: scanner exited non-zero with no parseable hits"
+    printf '%s\n' "$out" | sed 's/^/     /'
+    return
+  fi
+  if [ -f "$ALLOW" ]; then
+    # Blank lines are stripped deliberately: an empty pattern matches every
+    # line, which would silently allow everything. (It did, once.)
+    pats=$(mktemp)
+    grep -vE '^[[:space:]]*(#|$)' "$ALLOW" > "$pats" || true
+    if [ ! -s "$pats" ]; then
+      bad "$ALLOW exists but contains no patterns; refusing to scan against nothing"
+      rm -f "$pats"; return
+    fi
+    allowed=$(printf '%s\n' "$hits" | grep -Ef "$pats" || true)
+    hits=$(printf '%s\n' "$hits" | grep -vEf "$pats" || true)
+    rm -f "$pats"
+    [ -n "$allowed" ] && printf '   OK   %d hit(s) covered by %s\n' \
+      "$(printf '%s\n' "$allowed" | wc -l)" "$ALLOW"
+  fi
+  if [ -z "$hits" ]; then
+    ok "$label: no unexamined hits"
+  else
+    bad "$label: unexamined hit(s)"
+    printf '%s\n' "$hits" | sed 's/^/     /'
+    printf '     (add to %s ONLY with a stated reason, never to unblock a push)\n' "$ALLOW"
+  fi
+}
+
 if [ -x "$SCAN" ]; then
-  if "$SCAN" --staged; then ok "staged diff clean"; else bad "secret scan: staged hits"; fi
+  scan_target "staged diff" --staged
   if git rev-parse --verify HEAD >/dev/null 2>&1; then
     if git rev-parse --verify origin/main >/dev/null 2>&1; then
-      if "$SCAN" --range origin/main..HEAD; then ok "origin/main..HEAD clean"
-      else bad "secret scan: committed hits"; fi
+      scan_target "origin/main..HEAD" --range origin/main..HEAD
     else
-      if "$SCAN" --all; then ok "all tracked files clean"
-      else bad "secret scan: tracked-file hits"; fi
+      scan_target "tracked files" --all
       skip "no origin/main yet — scanned every tracked file instead"
     fi
   fi

@@ -21,4 +21,6 @@ Notable changes. Newest first.
   the planned-but-unwritten `ghostty/` bundle (macOS/Linux) with its open
   questions.
 - Added `scripts/gate.sh` (shell syntax, optional Lua syntax check, README path
-  existence, secret scan), `.gitignore`, `LICENSE` (MIT), `AGENTS.md`.
+  existence, secret scan), `scripts/secret-scan.allowlist`, `.gitignore`,
+  `LICENSE` (MIT), `AGENTS.md`. The gate's failure paths were exercised with a
+  planted token and a bogus README path.

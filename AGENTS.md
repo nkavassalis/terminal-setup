@@ -27,7 +27,8 @@ terminal-setup/
 ├── LICENSE                MIT (house license)
 ├── .gitignore             Keys, .env, editor droppings, *.local.lua
 ├── scripts/
-│   └── gate.sh            Pre-push gate (see "How to test")
+│   ├── gate.sh            Pre-push gate (see "How to test")
+│   └── secret-scan.allowlist  Approved disclosures, each with its reason
 └── wezterm/               The one real bundle -> wezterm/README.md
     ├── README.md          Install, keys, per-machine settings, troubleshooting
     ├── wezterm.lua        WezTerm config (copied to %USERPROFILE%\.wezterm.lua)
@@ -61,8 +62,9 @@ It runs, in order: `bash -n` on `wezterm.sh` and itself; a Lua syntax check
 (`luacheck`, else `luac -p`, else **SKIP** — neither is installed on this box);
 a check that every `wezterm/<file>` path mentioned in either README actually
 exists; and the house secret scan (`~/meta/scripts/secret-scan.sh`, staged plus
-tracked files). It prints a `NOT COVERED` list, which belongs verbatim in the
-handoff summary.
+tracked files), with hits matched against `scripts/secret-scan.allowlist`.
+Anything the allowlist does not cover is a failure. It prints a `NOT COVERED`
+list, which belongs verbatim in the handoff summary.
 
 There is no pytest tier, no browser tier and no lint config — this repo has no
 application code. Do not add a test framework to satisfy a checklist; add a
@@ -111,6 +113,20 @@ through to WezTerm.
 **Two READMEs, different jobs.** Parent = map + cross-bundle conventions.
 Bundle = install + troubleshooting. The parent must never duplicate install
 steps, because they drift.
+
+**Approved disclosures are an allowlist, not a quieter scanner.**
+`scripts/secret-scan.allowlist` holds one regex per approved value, each
+preceded by a comment saying who approved it and why. The house scanner's
+pattern list is never edited, and an empty pattern file is a hard failure
+rather than a pass-through. Patterns are written with the bracket trick
+(`tools[b]ox`) so the allowlist doesn't trip the scan itself.
+
+**Scar tissue, same file:** the first version of the filter passed the allowlist
+through `grep -v '^\s*#'`, which kept blank lines — and a blank line is an empty
+pattern that matches every hit line. The scan then reported 28/28 "covered"
+including a planted fake token. Blank lines are now stripped and an empty
+pattern set fails the gate. Any future filter must be tested by planting a
+secret, not just by running it on a clean tree.
 
 ## Invariants
 
@@ -171,9 +187,10 @@ Say these out loud rather than implying coverage:
   out, not reproduced.
 - `wezterm.sh` was verified against upstream `main` by `diff` on 2026-10-24.
   That says nothing about later upstream changes.
-- `gate.sh` itself has been run (`bash -n` plus a live run), but its
-  failure paths — a missing README path, a scanner hit — have not been
-  exercised with a deliberately broken input.
+- `gate.sh` itself has been run (`bash -n` plus a live run), and its failure
+  paths **were** exercised on 2026-10-24: a planted `ghp_…` token in a staged
+  file and a bogus `wezterm/does-not-exist.lua` README reference both produced
+  REFUSED with exit 1, and neither was covered by the allowlist.
 - Nothing about the remote box (herdr install, `~/.vimrc`, remote titles) has
   been verified from here.
 
@@ -196,6 +213,9 @@ Say these out loud rather than implying coverage:
   is not vendored (see Design decisions) so it can silently no-op if `~/meta`
   is absent — the gate prints a SKIP saying "Do not push without a scan." Read
   the summary, don't just read the exit code.
+- `scripts/secret-scan.allowlist` is the only thing that can excuse a hit. New
+  entries need a stated reason and Nick's name; deleting one should produce a
+  FAIL, and if it doesn't, the filter is broken.
 - `.gitignore` blocks private keys, `.env`, logs and `*.local.*` overrides.
 - Repo-local git identity is the GitHub noreply address.
 - `gh auth status` must report `nkavassalis` before any push.
