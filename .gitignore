@@ -1,0 +1,28 @@
+# Private keys — never in this repo, not even "temporarily"
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local, machine-specific overrides (see AGENTS.md)
+*.local.lua
+*.local.sh
+.env
+.env.*
+!.env.example
+
+# Editor / shell droppings
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Scratch and captured output
+*.log
+screenshots/
+tmp/
