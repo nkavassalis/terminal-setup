@@ -161,8 +161,6 @@ secret, not just by running it on a clean tree.
 
 ## Known issues / TODOs
 
-- `wezterm/README.txt` is a 0-byte stray, untracked. Delete it or leave it;
-  Nick hasn't said.
 - No Lua syntax checking is possible on this box (no `lua`/`luac`/`luacheck`),
   so `gate.sh` always SKIPs that step here.
 - Ghostty bundle: see the open questions in the parent README (which WezTerm

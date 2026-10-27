@@ -10,6 +10,7 @@ Notable changes. Newest first.
   the race (herdr detaches before consuming WezTerm's OSC 10/11 / DC color
   reply, which then lands on the `exec bash -l` prompt), that it is cosmetic,
   and to check `herdr status` for client/server version skew first.
+- Deleted the 0-byte stray `wezterm/README.txt` (untracked; Nick approved).
 
 ## 2026-10-24 — initial public release
 
