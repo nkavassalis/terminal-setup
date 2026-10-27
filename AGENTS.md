@@ -115,6 +115,13 @@ it must be tested, re-run the raw-pty check afterwards and record the result.
 `enable_kitty_graphics` is a separate protocol and stays `true` — herdr image
 panes depend on it and it is unaffected by this bug.
 
+**Nothing in Nick's workflow needs the Kitty keyboard protocol.** Asked
+directly on 2026-10-24 whether he uses Shift+Enter (or similar chords) in
+Claude Code / Codex, he said no. So the one argument for flipping the flag
+back on is gone: leave it `false` permanently. If that ever changes, prefer a
+per-tab toggle keybinding over a global `true`, and re-run the raw-pty check
+afterwards — the mode can survive the app that enabled it.
+
 **Chrome link handling has two entry points on purpose.** `open-uri` covers a
 normal click; Ctrl+Shift+O rebuilds a URL from the selection (or the clipboard,
 for herdr's OSC 52 copies), strips U+2500–U+257F box-drawing so pane borders
@@ -211,7 +218,10 @@ Say these out loud rather than implying coverage:
   to Ctrl+Shift+R and re-run the same raw-pty check. Also unverified: whether
   the drop also happens in a plain WSL tab (the check was run on the remote
   box), and whether anything Nick uses truly needs the Kitty keyboard
-  protocol.
+  protocol — answered 2026-10-24: he does not use Shift+Enter in agent CLIs,
+  so the flag stays off with no feature lost. Still unconfirmed: that the flip
+  actually restored Shift on his Windows box (he has not re-run the raw-pty
+  test since the config landed on the Windows side).
 - `wezterm.sh` was verified against upstream `main` by `diff` on 2026-10-24.
   That says nothing about later upstream changes.
 - `gate.sh` itself has been run (`bash -n` plus a live run), and its failure
