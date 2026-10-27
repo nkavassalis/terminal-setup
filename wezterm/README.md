@@ -48,8 +48,9 @@ repo.
   URLs that were soft-wrapped across lines (see "Links", below)
 - `toolsbox` SSH domain using WezTerm's built-in SSH client, which starts
   herdr on connect
-- Kitty keyboard and graphics protocols on, so agents in herdr get
-  Shift+Enter and similar chords, and herdr can render images
+- Kitty graphics protocol on, so herdr can render images. The Kitty
+  *keyboard* protocol is deliberately **off** — it eats Shift on Windows 11;
+  see Troubleshooting before turning it on
 
 ## Key bindings
 
@@ -262,7 +263,33 @@ typed. Don't add arrow-key mappings; vim already recognizes the sequences.
 
 **vim keys act oddly.** If vim misbehaves only in WezTerm, try
 `enable_kitty_keyboard = false` in `wezterm.lua` to rule out the Kitty
-keyboard protocol.
+keyboard protocol. (It is already `false`; this only matters if you turned it
+back on — see the next entry before you do.)
+
+**Shift letters and Shift symbols type nothing at all.** `A`, `?`, `!` produce
+no characters, while `a`, `1`, arrows, Ctrl+C and Enter are fine. This is not
+the shell, vim, herdr or Windows — the keys die inside WezTerm. Prove it on
+the remote box, where nothing local can interfere:
+
+```bash
+timeout 10 bash -c 'echo "TYPE NOW: a A ? 1 ! I"; stty raw -echo; cat -v; echo'
+```
+
+Healthy output contains all six (`aA?1!I`). If the shifted ones are simply
+**absent** — no bytes ever reach the pty — that is `enable_kitty_keyboard`,
+which is why it ships `false` here. Observed on Windows 11 with it `true`;
+upstream [wezterm#6900](https://github.com/wezterm/wezterm/issues/6900)
+(Shift+character keys emit invalid sequences on Windows) and
+[#7437](https://github.com/wezterm/wezterm/issues/7437) (the encoding isn't
+restored after a program turns the protocol off, which is how it also leaked
+across herdr detach/reattach).
+`allow_win32_input_mode` does **not** influence it, per the upstream report —
+don't chase that line.
+
+The cost of leaving it off: agent CLIs (Claude Code, Codex) won't see
+Shift+Enter-style chords. If you need one, flip it to `true` for that session
+only, Ctrl+Shift+R to reload, and re-run the raw-pty check above when you're
+done — the mode can survive the app that set it.
 
 **Links don't open in Chrome.** If a toast says `Chrome not found`, none of
 the three paths in `chrome_paths` exist on that machine — add yours. If

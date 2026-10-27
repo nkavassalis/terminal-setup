@@ -103,6 +103,18 @@ palette queries through ConPTY, which splits the replies and types `rgb:8787/…
 junk into herdr. Documented in the troubleshooting section; do not "simplify"
 this back to ssh-in-a-tab.
 
+**`enable_kitty_keyboard` stays `false`.** With it `true`, WezTerm on Windows
+11 swallows Shift-modified character keys outright — `A`, `?`, `!` emit zero
+bytes on the pty, confirmed by Nick with `stty raw -echo; cat -v` (plain `a`
+and `1` arrived). Upstream wezterm/wezterm#6900 (open) and #7437 (encoding not
+restored after the app disables the protocol — the same bad-detach family as
+the palette-query leak). `allow_win32_input_mode` does not affect it, per the
+upstream report. The trade is real: agent CLIs lose Shift+Enter chords, and
+that was the line's original purpose. Do not flip it back as a "cleanup"; if
+it must be tested, re-run the raw-pty check afterwards and record the result.
+`enable_kitty_graphics` is a separate protocol and stays `true` — herdr image
+panes depend on it and it is unaffected by this bug.
+
 **Chrome link handling has two entry points on purpose.** `open-uri` covers a
 normal click; Ctrl+Shift+O rebuilds a URL from the selection (or the clipboard,
 for herdr's OSC 52 copies), strips U+2500–U+257F box-drawing so pane borders
@@ -191,6 +203,15 @@ Say these out loud rather than implying coverage:
   `server_binary_stale: yes`), never on toolsbox. No herdr-side knob to
   disable the query was found in 0.9.5 (`herdr config` has only `check` and
   `reset-keys`). Nick should confirm the fix by hand on toolsbox.
+- The **Shift-keys-dropped** entry is the best-evidenced one here: Nick ran
+  `stty raw -echo; cat -v` on the remote box and reported `a` and `1` arriving
+  with `A`, `?`, `!`, `I` producing nothing, and the upstream issues (#6900,
+  #7437) were read live from GitHub. **Not** verified: that flipping
+  `enable_kitty_keyboard` to `false` actually restores Shift — that needs Nick
+  to Ctrl+Shift+R and re-run the same raw-pty check. Also unverified: whether
+  the drop also happens in a plain WSL tab (the check was run on the remote
+  box), and whether anything Nick uses truly needs the Kitty keyboard
+  protocol.
 - `wezterm.sh` was verified against upstream `main` by `diff` on 2026-10-24.
   That says nothing about later upstream changes.
 - `gate.sh` itself has been run (`bash -n` plus a live run), and its failure

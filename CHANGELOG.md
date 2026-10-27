@@ -11,6 +11,15 @@ Notable changes. Newest first.
   reply, which then lands on the `exec bash -l` prompt), that it is cosmetic,
   and to check `herdr status` for client/server version skew first.
 - Deleted the 0-byte stray `wezterm/README.txt` (untracked; Nick approved).
+- `wezterm.lua`: `enable_kitty_keyboard` flipped `true` -> `false`. With it on,
+  WezTerm on Windows 11 dropped Shift-modified character keys entirely — `A`,
+  `?`, `!`, `I` produced no bytes on the pty (Nick confirmed with
+  `stty raw -echo; cat -v`). Upstream wezterm/wezterm#6900 and #7437. Trade:
+  agent CLIs lose Shift+Enter chords. `enable_kitty_graphics` is a separate
+  protocol and is unaffected.
+- New troubleshooting entry for the dropped Shift keys, including the raw-pty
+  reproduction command; the "vim keys act oddly" entry and the Kitty feature
+  bullet updated to match.
 
 ## 2026-10-24 — initial public release
 

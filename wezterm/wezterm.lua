@@ -52,8 +52,15 @@ local spawn_toolsbox = act.SpawnCommandInNewTab {
 -- Fixes odd key behavior in vim under ConPTY/WSL
 config.allow_win32_input_mode = false
 
--- Lets Claude Code / Codex etc. see chords like Shift+Enter (helps herdr).
-config.enable_kitty_keyboard = true
+-- OFF ON PURPOSE. Letting programs opt into the Kitty keyboard protocol
+-- makes WezTerm swallow Shift-modified character keys on Windows 11: Shift+A,
+-- ? and ! produce *no bytes at all* on the pty (verified with `stty raw
+-- -echo; cat -v` — `a` and `1` arrive, their shifted twins do not). Upstream
+-- wezterm/wezterm#6900, still open; #7437 covers the mode not restoring after
+-- a program disables it, which is why it also used to leak across herdr
+-- detach/reattach. Cost: agent CLIs lose Shift+Enter-style chords. Re-enable
+-- only to test, and re-run the raw-pty check above.
+config.enable_kitty_keyboard = false
 
 -- Lets herdr render images/graphics panes
 config.enable_kitty_graphics = true
