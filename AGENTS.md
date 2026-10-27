@@ -185,6 +185,14 @@ Say these out loud rather than implying coverage:
 - The two link-related troubleshooting entries describe code paths
   (`Chrome not found`, first-match-wins on multiple URLs); they were reasoned
   out, not reproduced.
+- The "spew on reattach" troubleshooting entry: the **symptom** is Nick's own
+  observation, but the **mechanism** (palette-query reply typed to the prompt
+  after an early detach) is inferred from the shape of the garbage
+  (`rgb:` + doubled-hex components), not reproduced. The `herdr status`
+  version-skew lead was observed on *this* box (client 0.9.5 / server 0.9.1,
+  `server_binary_stale: yes`), never on toolsbox. No herdr-side knob to
+  disable the query was found in 0.9.5 (`herdr config` has only `check` and
+  `reset-keys`). Nick should confirm the fix by hand on toolsbox.
 - `wezterm.sh` was verified against upstream `main` by `diff` on 2026-10-24.
   That says nothing about later upstream changes.
 - `gate.sh` itself has been run (`bash -n` plus a live run), and its failure

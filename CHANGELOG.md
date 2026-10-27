@@ -2,6 +2,15 @@
 
 Notable changes. Newest first.
 
+## Unreleased
+
+- `wezterm/README.md`: new troubleshooting entry for the palette-query spew
+  (`rgb:…`, `d7d7`, `afaf`, `5f5f`) that appears on **reattach** even via
+  WezTerm's built-in SSH — distinct from the existing ConPTY entry. Explains
+  the race (herdr detaches before consuming WezTerm's OSC 10/11 / DC color
+  reply, which then lands on the `exec bash -l` prompt), that it is cosmetic,
+  and to check `herdr status` for client/server version skew first.
+
 ## 2026-10-24 — initial public release
 
 - First commit of the `wezterm/` bundle: `wezterm.lua`, the vendored

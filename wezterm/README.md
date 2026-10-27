@@ -220,6 +220,32 @@ inside a WSL tab, since WezTerm's built-in SSH client bypasses ConPTY. Also
 keep herdr updated (`herdr update`, then `herdr server stop` and reattach),
 because these leak fixes change from release to release.
 
+**Same `rgb:`/`d7d7`/`afaf` spew, but on reattach, even via Ctrl+Shift+S.**
+Different mechanism, same family. The garbage is not corruption — it is
+WezTerm *answering* herdr's palette query (OSC 10/11 and the DC color report
+return doubled-hex components like `d7d7`, `afaf`, `5f5f`, `8787`). WezTerm
+always answers; herdr is supposed to read the reply. When an attach tears down
+early — slow link, resize storm, or a client/server version skew — herdr
+detaches before consuming it, the `exec bash -l` fallback in `default_prog`
+comes up, and the reply is typed onto the bash prompt as literal input. It is
+occasional because it is a race between herdr's read window and the reply.
+What to do:
+
+- It is cosmetic. Press Ctrl+C; the line is gone and nothing was executed
+  (`rgb:` is not a command). If it landed *inside* a herdr pane's input,
+  clear the line before running anything.
+- Check the skew first: `herdr status` on toolsbox. If `client` and `server`
+  versions differ or `server_binary_stale: yes`, run `herdr update`, then
+  `herdr server stop`, then reconnect. A stale server is the most common
+  trigger for the early detach.
+- If it happens on *every* reattach rather than occasionally, that is not this
+  race — report it upstream with the `herdr status` output and your WezTerm
+  version.
+
+There is no WezTerm-side switch to stop answering these queries, and herdr
+0.9.5 has no config knob to stop asking; the fix lives in whichever side wins
+the race.
+
 **SSH tab says `PUBLIC_KEY: Denied`.** The key is only on the WSL side. See
 install step 3.
 
